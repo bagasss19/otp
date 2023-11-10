@@ -1,0 +1,73 @@
+definitions:
+  main.GenerateOTPReq:
+    properties:
+      phone_number:
+        type: string
+    type: object
+  main.Response:
+    properties:
+      data: {}
+      message:
+        type: string
+    type: object
+  main.ValidateOTPReq:
+    properties:
+      otp:
+        type: string
+      phone_number:
+        type: string
+    type: object
+host: localhost:3000
+info:
+  contact: {}
+  description: This is a collection of otp API.
+  title: OTP API
+  version: "1.0"
+paths:
+  /otp:
+    post:
+      description: Generate OTP - if otp has requested 3 times, wait 60 minutes to
+        generate again
+      parameters:
+      - description: body payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/main.GenerateOTPReq'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.Response'
+      summary: Generate OTP
+      tags:
+      - OTP
+  /otp-validate:
+    post:
+      description: Validate OTP - if otp has validated 3 times and wrong, then the
+        otp will be invalid. this apply when otp has successfull validated as well
+      parameters:
+      - description: body payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/main.ValidateOTPReq'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.Response'
+      summary: Validate OTP
+      tags:
+      - OTP
+swagger: "2.0"
