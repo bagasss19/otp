@@ -26,6 +26,7 @@ type OTP struct {
 	RequestCount  int32     `json:"request_count"`
 	ValidateCount int32     `json:"validate_count"`
 	LastRequest   time.Time `json:"last_request"`
+	IsValid       bool      `json:"is_valid"`
 }
 
 // constant
@@ -97,6 +98,7 @@ func updateJson(data []OTP, req OTP) error {
 			data[i].RequestCount = req.RequestCount
 			data[i].ValidateCount = req.ValidateCount
 			data[i].LastRequest = req.LastRequest
+			data[i].IsValid = req.IsValid
 		}
 	}
 
@@ -160,6 +162,7 @@ func GenerateOTP(req GenerateOTPReq) (resp Response) {
 				RequestCount:  1,
 				ValidateCount: 0,
 				LastRequest:   time.Now(),
+				IsValid:       true,
 			})
 			if err != nil {
 				return mapResponse(MSGERR, err.Error())
@@ -181,6 +184,8 @@ func GenerateOTP(req GenerateOTPReq) (resp Response) {
 		otp.RequestCount = 1
 		otp.LastRequest = now
 		otp.ValidateCount = 0
+		otp.IsValid = true
+
 		err = updateJson(data, *otp)
 		if err != nil {
 			return mapResponse(MSGERR, err.Error())
@@ -193,6 +198,7 @@ func GenerateOTP(req GenerateOTPReq) (resp Response) {
 	otp.LastRequest = now
 	otp.OTP = getOTPNumber()
 	otp.ValidateCount = 0
+	otp.IsValid = true
 
 	err = updateJson(data, *otp)
 	if err != nil {
@@ -222,13 +228,18 @@ func ValidateOTP(req ValidateOTPReq) (resp Response) {
 		return mapResponse(MSGERR, err.Error())
 	}
 
-	if otp.ValidateCount == 3 {
+	// check if otp valid
+	if !otp.IsValid {
 		return mapResponse(OTPINVALID, nil)
 	}
 
 	// if otp is wrong
 	if otp.OTP != req.OTP {
 		otp.ValidateCount++
+		if otp.ValidateCount == 3 {
+			otp.IsValid = false
+		}
+
 		err = updateJson(data, *otp)
 		if err != nil {
 			return mapResponse(MSGERR, err.Error())
@@ -239,7 +250,7 @@ func ValidateOTP(req ValidateOTPReq) (resp Response) {
 
 	// if ok, otp will invalidated
 	otp.ValidateCount = 3
-	otp.LastRequest = time.Now().Add(-60 * time.Minute)
+	otp.IsValid = false
 	err = updateJson(data, *otp)
 	if err != nil {
 		return mapResponse(MSGERR, err.Error())
